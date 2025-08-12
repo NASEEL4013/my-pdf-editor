@@ -17,17 +17,15 @@
         #submit-btn:hover { background-color: #0056b3; }
         .back-link { display: block; text-align: center; margin-top: 1.5rem; color: #007bff; text-decoration: none; }
         .back-link:hover { text-decoration: underline; }
-        
-        /* 로딩 화면 스타일 추가 */
         .loading { display: none; text-align: center; margin-top: 1.5rem; font-size: 1.2rem; color: #007bff; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>PDF 분할기</h1>
-        <p>분할할 PDF 파일을 업로드하고 페이지 범위를 입력해 주세요.</p>
+        <p>분할할 PDF 파일을 선택하고 페이지 범위를 입력해 주세요.</p>
         
-        <form action="/split" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
+        <form id="split-form">
             <div class="form-group">
                 <label for="pdf_file">PDF 파일 선택:</label>
                 <input type="file" id="pdf_file" name="pdf_file" accept=".pdf" required>
@@ -36,7 +34,7 @@
                 <label for="page_ranges">페이지 범위 (예: 1-5, 10, 15-20):</label>
                 <input type="text" id="page_ranges" name="page_ranges" placeholder="1-56, 57-114, 115-174" required>
             </div>
-            <input type="submit" id="submit-btn" value="PDF 분할">
+            <button type="submit" id="submit-btn">PDF 분할</button>
         </form>
         
         <div class="loading" id="loading-message">
@@ -47,10 +45,103 @@
         <a href="/" class="back-link">메인 메뉴로 돌아가기</a>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <script>
+        const form = document.getElementById('split-form');
+        const fileInput = document.getElementById('pdf_file');
+        const pageRangesInput = document.getElementById('page_ranges');
+        const submitBtn = document.getElementById('submit-btn');
+        const loadingMessage = document.getElementById('loading-message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading();
+
+            try {
+                const file = fileInput.files[0];
+                const pageRangesStr = pageRangesInput.value;
+                
+                // 파일 리더를 사용해서 PDF 파일을 읽어옵니다.
+                const fileReader = new FileReader();
+                fileReader.readAsArrayBuffer(file);
+
+                fileReader.onload = async () => {
+                    const arrayBuffer = fileReader.result;
+                    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                    const totalPages = pdfDoc.getPageCount();
+
+                    // 페이지 범위 파싱 (예: "1-5, 10, 15-20")
+                    const pageRanges = pageRangesStr.split(',').map(s => s.trim());
+                    const splitPdfs = [];
+
+                    for (const range of pageRanges) {
+                        const newPdf = await PDFLib.PDFDocument.create();
+                        let pagesToCopy = [];
+
+                        if (range.includes('-')) {
+                            const [startStr, endStr] = range.split('-').map(s => s.trim());
+                            const start = parseInt(startStr, 10);
+                            const end = parseInt(endStr, 10);
+                            if (start > 0 && end >= start && end <= totalPages) {
+                                for (let i = start - 1; i < end; i++) {
+                                    pagesToCopy.push(i);
+                                }
+                            }
+                        } else {
+                            const pageNum = parseInt(range, 10);
+                            if (pageNum > 0 && pageNum <= totalPages) {
+                                pagesToCopy.push(pageNum - 1);
+                            }
+                        }
+                        
+                        if (pagesToCopy.length > 0) {
+                            const copiedPages = await newPdf.copyPages(pdfDoc, pagesToCopy);
+                            copiedPages.forEach(page => newPdf.addPage(page));
+                            splitPdfs.push({
+                                filename: `split_${range}.pdf`,
+                                data: await newPdf.save()
+                            });
+                        }
+                    }
+
+                    if (splitPdfs.length > 0) {
+                        const zip = new JSZip();
+                        splitPdfs.forEach(pdf => {
+                            zip.file(pdf.filename, pdf.data);
+                        });
+
+                        const zipData = await zip.generateAsync({ type: 'blob' });
+                        const url = URL.createObjectURL(zipData);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'split_pdfs.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                    } else {
+                        alert("유효한 페이지 범위가 없어 분할에 실패했습니다.");
+                    }
+
+                };
+            } catch (error) {
+                alert("파일 처리 중 오류가 발생했습니다: " + error.message);
+                console.error(error);
+            } finally {
+                hideLoading();
+            }
+        });
+
         function showLoading() {
-            document.getElementById('submit-btn').disabled = true; // 버튼 비활성화
-            document.getElementById('loading-message').style.display = 'block'; // 로딩 메시지 표시
+            submitBtn.disabled = true;
+            loadingMessage.style.display = 'block';
+        }
+
+        function hideLoading() {
+            submitBtn.disabled = false;
+            loadingMessage.style.display = 'none';
         }
     </script>
 </body>
