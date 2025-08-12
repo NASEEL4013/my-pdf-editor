@@ -5,18 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>나실의 PDF편집기</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; background-color: #f4f4f4; }
-        .container { max-width: 800px; margin: 0 auto; text-align: center; }
-        h1 { color: #333; }
-        .menu { list-style: none; padding: 0; display: flex; justify-content: center; gap: 1rem; }
-        .menu a { text-decoration: none; color: white; background-color: #007bff; padding: 1rem 2rem; border-radius: 8px; font-weight: bold; transition: background-color 0.3s; }
-        .menu a:hover { background-color: #0056b3; }
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #282c34;
+            color: #abb2bf;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            color: #61afef;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .menu {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .menu a {
+            text-decoration: none;
+            color: #abb2bf;
+            background-color: #3e4451;
+            padding: 1rem 2.5rem;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background-color 0.3s, color 0.3s;
+            border: 1px solid #5c6370;
+        }
+        .menu a:hover {
+            background-color: #5c6370;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>나실의 유용한 도구들</h1>
-
+        <h1>나만의 유용한 도구들</h1>
         <ul class="menu">
             <li><a href="/pdf_splitter">PDF 분할기</a></li>
             </ul>
