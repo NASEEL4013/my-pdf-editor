@@ -56,14 +56,13 @@
         const loadingMessage = document.getElementById('loading-message');
 
         form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            e.preventDefault(); // <-- 이 코드가 페이지 새로고침을 막아줍니다!
             showLoading();
 
             try {
                 const file = fileInput.files[0];
                 const pageRangesStr = pageRangesInput.value;
                 
-                // 파일 리더를 사용해서 PDF 파일을 읽어옵니다.
                 const fileReader = new FileReader();
                 fileReader.readAsArrayBuffer(file);
 
@@ -72,7 +71,6 @@
                     const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
                     const totalPages = pdfDoc.getPageCount();
 
-                    // 페이지 범위 파싱 (예: "1-5, 10, 15-20")
                     const pageRanges = pageRangesStr.split(',').map(s => s.trim());
                     const splitPdfs = [];
 
